@@ -2,7 +2,7 @@ import os
 import torch
 from typing import Union
 import torch.nn as nn
-from logging import *
+import logging
 
 logger = logging.get_logger(__name__)
 class BlipTextConfig(nn.Module):
