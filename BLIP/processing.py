@@ -24,7 +24,7 @@ class BlipProcessor(ProcessorMixin):
 
     attributes = ["image_processor", "tokenizer"]
     image_processor_class = "BlipImageProcessor"
-    tokenizer_class = ("PhobertTokenizer")
+    tokenizer_class = ("PhobertTokenizer","BertTokenizerFast","BertTokenizer")
 
     def __init__(self, image_processor, tokenizer):
         tokenizer.return_token_type_ids = False
