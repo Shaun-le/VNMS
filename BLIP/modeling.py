@@ -1,17 +1,16 @@
 import math
 from typing import Optional, Tuple, Union
-
 import torch
 import torch.nn as nn
 from dataclasses import dataclass
 
-from BLIP.activations import ACT2FN
-from BLIP.doc import replace_return_docstrings, add_start_docstrings
-from transformers import BlipVisionConfig, BlipConfig, PreTrainedModel, BlipPreTrainedModel
-
-from BLIP.generic import ModelOutput
-from BLIP.modeling_outputs import BaseModelOutput, BaseModelOutputWithPooling
-from BLIP.modeling_text import BlipTextModel, BlipTextLMHeadModel
+from transformers.activations import ACT2FN
+from transformers.modeling_outputs import BaseModelOutput, BaseModelOutputWithPooling
+from transformers.models.blip.modeling_blip import BLIP_VISION_INPUTS_DOCSTRING
+from transformers.models.blip.modeling_blip_text import BlipTextLMHeadModel
+from transformers.utils import add_start_docstrings_to_model_forward, replace_return_docstrings, ModelOutput
+from transformers import BlipVisionConfig, BlipConfig, PreTrainedModel, BlipPreTrainedModel, add_start_docstrings, \
+    BlipTextModel
 
 
 class BlipAttention(nn.Module):
@@ -294,12 +293,12 @@ class BlipEncoder(nn.Module):
             last_hidden_state=hidden_states, hidden_states=encoder_states, attentions=all_attentions
         )
 
-class BlipVisionModel(nn.Module):
+class BlipVisionModel(BlipPreTrainedModel):
     main_input_name = "pixel_values"
     config_class = BlipVisionConfig
 
     def __init__(self, config: BlipVisionConfig):
-        super().__init__()
+        super().__init__(config)
         self.config = config
         embed_dim = config.hidden_size
 
@@ -307,7 +306,9 @@ class BlipVisionModel(nn.Module):
         self.encoder = BlipEncoder(config)
         self.post_layernorm = nn.LayerNorm(embed_dim, eps=config.layer_norm_eps)
 
-    #@add_start_docstrings_to_model_forward(BLIP_VISION_INPUTS_DOCSTRING)
+        self.post_init()
+
+    @add_start_docstrings_to_model_forward(BLIP_VISION_INPUTS_DOCSTRING)
     @replace_return_docstrings(output_type=BaseModelOutputWithPooling, config_class=BlipVisionConfig)
     def forward(
         self,
@@ -416,8 +417,8 @@ class BlipForSummarization(BlipPreTrainedModel):
     def get_input_embeddings(self) -> nn.Module:
         return self.vision_model.embeddings.patch_embedding
 
-    #@add_start_docstrings_to_model_forward(BLIP_VISION_INPUTS_DOCSTRING)
-    #@replace_return_docstrings(output_type=BlipTextVisionModelOutput, config_class=BlipVisionConfig)
+    @add_start_docstrings_to_model_forward(BLIP_VISION_INPUTS_DOCSTRING)
+    @replace_return_docstrings(output_type=BlipTextVisionModelOutput, config_class=BlipVisionConfig)
     def forward(
         self,
         input_ids: torch.LongTensor,
