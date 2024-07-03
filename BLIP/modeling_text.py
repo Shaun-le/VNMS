@@ -1312,7 +1312,7 @@ class BlipTextLMHeadModel(BlipTextPreTrainedModel):
         if labels is not None:
             use_cache = False
 
-        outputs = self.bert(
+        outputs = self.phobert(
             input_ids,
             attention_mask=attention_mask,
             position_ids=position_ids,
