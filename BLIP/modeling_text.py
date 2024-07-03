@@ -4,15 +4,15 @@ import torch
 import torch.utils.checkpoint
 from torch import Tensor, device, nn
 from torch.nn import CrossEntropyLoss
-from activations import ACT2FN
-from modeling_outputs import (
+from .activations import ACT2FN
+from .modeling_outputs import (
     BaseModelOutputWithPastAndCrossAttentions,
     BaseModelOutputWithPoolingAndCrossAttentions,
     CausalLMOutputWithCrossAttentions,
 )
 import inspect
-from logging import logging
-from configuration import BlipTextConfig
+from BLIP import logging
+from .configuration import BlipTextConfig
 
 
 logger = logging.get_logger(__name__)
@@ -199,6 +199,8 @@ class BlipTextSelfAttention(nn.Module):
 
 
 # Copied from transformers.models.bert.modeling_bert.BertSelfOutput with Bert -> BlipText
+
+
 class BlipTextSelfOutput(nn.Module):
     def __init__(self, config):
         super().__init__()
@@ -685,14 +687,12 @@ class BlipTextModel(nn.Module):
     """
 
     def __init__(self, config, add_pooling_layer=True):
-        super().__init__(config)
+        super().__init__()
         self.config = config
 
         self.embeddings = BlipTextEmbeddings(config)
         self.encoder = BlipTextEncoder(config)
         self.pooler = BlipTextPooler(config) if add_pooling_layer else None
-
-        self.post_init()
 
     def get_input_embeddings(self):
         return self.embeddings.word_embeddings
@@ -917,8 +917,8 @@ class BlipTextModel(nn.Module):
 # Adapted from https://github.com/salesforce/BLIP/blob/main/models/med.py#L811
 class BlipTextLMHeadModel(nn.Module):
     def __init__(self, config):
-        super().__init__(config)
-
+        super().__init__()
+        self.config = config
         self.bert = BlipTextModel(config, add_pooling_layer=False)
         self.cls = BlipTextOnlyMLMHead(config)
         self.label_smoothing = config.label_smoothing

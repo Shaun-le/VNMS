@@ -2,7 +2,9 @@ import warnings
 from dataclasses import dataclass
 from typing import Optional, Tuple
 import torch
-from generic import *
+
+from BLIP.generic import ModelOutput
+
 
 @dataclass
 class BaseModelOutput(ModelOutput):

@@ -31,8 +31,7 @@ from typing import Any, Tuple, Union
 
 from packaging import version
 
-from logging import *
-
+from BLIP import logging
 
 logger = logging.get_logger(__name__)  # pylint: disable=invalid-name
 

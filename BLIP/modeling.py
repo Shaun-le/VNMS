@@ -3,12 +3,14 @@ import torch
 import torch.nn as nn
 from dataclasses import dataclass
 from typing import Any, Optional, Tuple, Union
-from activations import ACT2FN
-from configuration import *
-from modeling_outputs import BaseModelOutput, BaseModelOutputWithPooling
-from doc import *
-from modeling_text import *
-from generic import *
+from .activations import ACT2FN
+from .doc import replace_return_docstrings, add_start_docstrings_to_model_forward, add_start_docstrings
+from .generic import ModelOutput
+from .modeling_outputs import BaseModelOutput, BaseModelOutputWithPooling
+from transformers import BlipVisionConfig, BlipConfig
+from .modeling_text import *
+#from .configuration import BlipVisionConfig, BlipConfig
+
 class BlipAttention(nn.Module):
     """Multi-headed attention from 'Attention Is All You Need' paper"""
 
@@ -92,7 +94,7 @@ class BlipMLP(nn.Module):
         return hidden_states
 
 class BlipEncoderLayer(nn.Module):
-    def __init__(self, config):
+    def __init__(self, config: BlipConfig):
         super().__init__()
         self.embed_dim = config.hidden_size
         self.self_attn = BlipAttention(config)
@@ -294,7 +296,7 @@ class BlipVisionModel(nn.Module):
     config_class = BlipVisionConfig
 
     def __init__(self, config: BlipVisionConfig):
-        super().__init__(config)
+        super().__init__()
         self.config = config
         embed_dim = config.hidden_size
 
@@ -302,9 +304,7 @@ class BlipVisionModel(nn.Module):
         self.encoder = BlipEncoder(config)
         self.post_layernorm = nn.LayerNorm(embed_dim, eps=config.layer_norm_eps)
 
-        self.post_init()
-
-    @add_start_docstrings_to_model_forward(BLIP_VISION_INPUTS_DOCSTRING)
+    #@add_start_docstrings_to_model_forward(BLIP_VISION_INPUTS_DOCSTRING)
     @replace_return_docstrings(output_type=BaseModelOutputWithPooling, config_class=BlipVisionConfig)
     def forward(
         self,
@@ -355,23 +355,6 @@ class BlipVisionModel(nn.Module):
     def get_input_embeddings(self):
         return self.embeddings
 
-class BlipTextModel(nn.Module):
-    def __init__(self, vocab_size, max_position_embeddings, num_layers, dim):
-        super().__init__()
-        self.embeddings = nn.Embedding(vocab_size, dim)
-        self.position_embeddings = nn.Embedding(max_position_embeddings, dim)
-        self.layer_norm = nn.LayerNorm(dim)
-        self.dropout = nn.Dropout(p=0.0)
-        self.encoder = nn.ModuleList([BlipEncoderLayer(dim, dim * 4) for _ in range(num_layers)])
-
-    def forward(self, input_ids):
-        positions = torch.arange(0, input_ids.size(1), device=input_ids.device).unsqueeze(0)
-        x = self.embeddings(input_ids) + self.position_embeddings(positions)
-        x = self.dropout(self.layer_norm(x))
-        for layer in self.encoder:
-            x = layer(x)
-        return x
-
 @dataclass
 class BlipTextVisionModelOutput(ModelOutput):
     """
@@ -404,12 +387,21 @@ class BlipTextVisionModelOutput(ModelOutput):
     hidden_states: Optional[Tuple[torch.FloatTensor, ...]] = None
     attentions: Optional[Tuple[torch.FloatTensor, ...]] = None
 
-class BlipForQuestionAnswering(nn.Module):
+@add_start_docstrings(
+    """
+    BLIP Model for visual summarization. The model consists of a vision encoder, a text encoder as well as a text
+    decoder. The vision encoder will encode the input image, the text encoder will encode the input question together
+    with the encoding of the image, and the text decoder will output the answer to the question.
+    """,
+)
+class BlipForSummarization(nn.Module):
     config_class = BlipConfig
     _tied_weights_keys = ["text_decoder.cls.predictions.decoder.bias"]
 
     def __init__(self, config: BlipConfig):
-        super().__init__(config)
+        super().__init__()
+
+        self.config = config
 
         self.vision_model = BlipVisionModel(config.vision_config)
 
@@ -420,14 +412,11 @@ class BlipForQuestionAnswering(nn.Module):
         self.decoder_pad_token_id = config.text_config.pad_token_id
         self.decoder_start_token_id = config.text_config.bos_token_id
 
-        # Initialize weights and apply final processing
-        self.post_init()
-
     def get_input_embeddings(self) -> nn.Module:
         return self.vision_model.embeddings.patch_embedding
 
-    @add_start_docstrings_to_model_forward(BLIP_VISION_INPUTS_DOCSTRING)
-    @replace_return_docstrings(output_type=BlipTextVisionModelOutput, config_class=BlipVisionConfig)
+    #@add_start_docstrings_to_model_forward(BLIP_VISION_INPUTS_DOCSTRING)
+    #@replace_return_docstrings(output_type=BlipTextVisionModelOutput, config_class=BlipVisionConfig)
     def forward(
         self,
         input_ids: torch.LongTensor,
@@ -441,7 +430,8 @@ class BlipForQuestionAnswering(nn.Module):
         return_dict: Optional[bool] = None,
         interpolate_pos_encoding: bool = False,
     ) -> Union[Tuple, BlipTextVisionModelOutput]:
-
+        r"""
+        Returns:"""
         if labels is None and decoder_input_ids is None:
             raise ValueError(
                 "Either `decoder_input_ids` or `labels` should be passed when calling `forward` with"
