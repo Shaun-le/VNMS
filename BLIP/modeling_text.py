@@ -6,17 +6,15 @@ import torch
 import torch.utils.checkpoint
 from torch import Tensor, device, nn
 from torch.nn import CrossEntropyLoss
-from .activations import ACT2FN
-from .import_utils import is_bitsandbytes_available
-from .modeling_outputs import (
-    BaseModelOutputWithPastAndCrossAttentions,
-    BaseModelOutputWithPoolingAndCrossAttentions,
-    CausalLMOutputWithCrossAttentions,
-)
 import inspect
 from BLIP import logging
-from .configuration import BlipTextConfig
-from transformers.modeling_utils import get_parameter_dtype, get_parameter_device, ModuleUtilsMixin
+from transformers.modeling_utils import get_parameter_dtype, get_parameter_device, ModuleUtilsMixin, PreTrainedModel
+
+from BLIP.activations import ACT2FN
+from BLIP.configuration import BlipTextConfig
+from BLIP.import_utils import is_bitsandbytes_available
+from BLIP.modeling_outputs import BaseModelOutputWithPastAndCrossAttentions, \
+    BaseModelOutputWithPoolingAndCrossAttentions, CausalLMOutputWithCrossAttentions
 
 logger = logging.get_logger(__name__)
 
@@ -656,14 +654,14 @@ class BlipTextOnlyMLMHead(nn.Module):
 
 
 # Adapted from https://github.com/salesforce/BLIP/blob/main/models/med.py#L548
-class BlipTextPreTrainedModel(nn.Module):
+class BlipTextPreTrainedModel(PreTrainedModel):
     """
     An abstract class to handle weights initialization and a simple interface for downloading and loading pretrained
     models.
     """
 
     config_class = BlipTextConfig
-    base_model_prefix = "bert"
+    base_model_prefix = "phobert"
     _no_split_modules = []
 
     def _init_weights(self, module):
@@ -680,7 +678,7 @@ class BlipTextPreTrainedModel(nn.Module):
 
 
 # Adapted from https://github.com/salesforce/BLIP/blob/3a29b7410476bf5f2ba0955827390eb6ea1f4f9d/models/med.py#L571
-class BlipTextModel(nn.Module):
+class BlipTextModel(BlipTextPreTrainedModel):
     """
     The model can behave as an encoder (with only self-attention) as well as a decoder, in which case a layer of
     cross-attention is added between the self-attention layers, following the architecture described in [Attention is
@@ -690,7 +688,7 @@ class BlipTextModel(nn.Module):
     """
 
     def __init__(self, config, add_pooling_layer=True):
-        super().__init__()
+        super().__init__(config)
         self.config = config
 
         self.embeddings = BlipTextEmbeddings(config)
@@ -1254,11 +1252,11 @@ class BlipTextModel(nn.Module):
 
 
 # Adapted from https://github.com/salesforce/BLIP/blob/main/models/med.py#L811
-class BlipTextLMHeadModel(nn.Module):
+class BlipTextLMHeadModel(BlipTextPreTrainedModel):
     def __init__(self, config):
-        super().__init__()
-        self.config = config
-        self.bert = BlipTextModel(config, add_pooling_layer=False)
+        super().__init__(config)
+
+        self.phobert = BlipTextModel(config, add_pooling_layer=False)
         self.cls = BlipTextOnlyMLMHead(config)
         self.label_smoothing = config.label_smoothing
 
