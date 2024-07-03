@@ -7,7 +7,7 @@ from dataclasses import dataclass
 
 from BLIP.activations import ACT2FN
 from BLIP.doc import replace_return_docstrings, add_start_docstrings
-from transformers import BlipVisionConfig, BlipConfig
+from transformers import BlipVisionConfig, BlipConfig, PreTrainedModel, BlipPreTrainedModel
 
 from BLIP.generic import ModelOutput
 from BLIP.modeling_outputs import BaseModelOutput, BaseModelOutputWithPooling
@@ -397,14 +397,12 @@ class BlipTextVisionModelOutput(ModelOutput):
     with the encoding of the image, and the text decoder will output the answer to the question.
     """,
 )
-class BlipForSummarization(nn.Module):
+class BlipForSummarization(BlipPreTrainedModel):
     config_class = BlipConfig
     _tied_weights_keys = ["text_decoder.cls.predictions.decoder.bias"]
 
     def __init__(self, config: BlipConfig):
-        super().__init__()
-
-        self.config = config
+        super().__init__(config)
 
         self.vision_model = BlipVisionModel(config.vision_config)
 
