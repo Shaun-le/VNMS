@@ -5,13 +5,13 @@ import torch
 import torch.nn as nn
 from dataclasses import dataclass
 
-from transformers.models.blip.modeling_blip_text import BlipTextLMHeadModel
+from BLIP.activations import ACT2FN
+from BLIP.doc import replace_return_docstrings, add_start_docstrings
+from transformers import BlipVisionConfig, BlipConfig
 
-from .activations import ACT2FN
-from .doc import replace_return_docstrings, add_start_docstrings
-from .generic import ModelOutput
-from .modeling_outputs import BaseModelOutput, BaseModelOutputWithPooling
-from transformers import BlipVisionConfig, BlipConfig, BlipTextModel
+from BLIP.generic import ModelOutput
+from BLIP.modeling_outputs import BaseModelOutput, BaseModelOutputWithPooling
+from BLIP.modeling_text import BlipTextModel, BlipTextLMHeadModel
 
 
 class BlipAttention(nn.Module):
