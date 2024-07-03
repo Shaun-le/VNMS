@@ -68,7 +68,7 @@ class BlipTextConfig(PretrainedConfig):
 
     def __init__(
         self,
-        vocab_size=64001,
+        vocab_size=64002,
         hidden_size=768,
         encoder_hidden_size=768,
         intermediate_size=3072,
