@@ -1,15 +1,18 @@
 import math
+from typing import Optional, Tuple, Union
+
 import torch
 import torch.nn as nn
 from dataclasses import dataclass
-from typing import Any, Optional, Tuple, Union
+
+from transformers.models.blip.modeling_blip_text import BlipTextLMHeadModel
+
 from .activations import ACT2FN
-from .doc import replace_return_docstrings, add_start_docstrings_to_model_forward, add_start_docstrings
+from .doc import replace_return_docstrings, add_start_docstrings
 from .generic import ModelOutput
 from .modeling_outputs import BaseModelOutput, BaseModelOutputWithPooling
-from transformers import BlipVisionConfig, BlipConfig
-from .modeling_text import *
-#from .configuration import BlipVisionConfig, BlipConfig
+from transformers import BlipVisionConfig, BlipConfig, BlipTextModel
+
 
 class BlipAttention(nn.Module):
     """Multi-headed attention from 'Attention Is All You Need' paper"""
