@@ -484,6 +484,9 @@ class BlipForSummarization(BlipPreTrainedModel):
             reduction="mean",
         )
 
+        print('decode: ')
+        print(answer_output)
+
         if labels is not None:
             decoder_loss = answer_output.loss.mean() if return_dict else answer_output[0].mean()
         else:
