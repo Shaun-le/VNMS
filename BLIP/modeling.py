@@ -551,8 +551,6 @@ class BlipForSummarization(BlipPreTrainedModel):
         bos_ids = torch.full(
             (question_embeds.size(0), 1), fill_value=self.decoder_start_token_id, device=question_embeds.device
         )
-        print('bos')
-        print(bos_ids)
         outputs = self.text_decoder.generate(
             input_ids=bos_ids,
             eos_token_id=self.config.text_config.sep_token_id,
@@ -561,8 +559,5 @@ class BlipForSummarization(BlipPreTrainedModel):
             encoder_attention_mask=question_attention_mask,
             **generate_kwargs,
         )
-
-        print('decode: ')
-        print(outputs)
 
         return outputs
