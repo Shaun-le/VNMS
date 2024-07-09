@@ -3,10 +3,7 @@ from typing import Optional, Tuple, Union
 import torch
 import torch.nn as nn
 from dataclasses import dataclass
-
-from transformers import BlipPreTrainedModel
-from transformers.models.blip.modeling_blip import BLIP_VISION_INPUTS_DOCSTRING
-
+from transformers import BlipPreTrainedModel, PreTrainedModel
 from BLIP.activations import ACT2FN
 from BLIP.configuration import BlipConfig, BlipVisionConfig
 from BLIP.doc import add_start_docstrings_to_model_forward, replace_return_docstrings, add_start_docstrings
@@ -209,6 +206,147 @@ class BlipVisionEmbeddings(nn.Module):
             position_embedding = self.position_embedding
         embeddings = embeddings + position_embedding[:, : embeddings.size(1), :].to(target_dtype)
         return embeddings
+
+class BlipPreTrainedModel(PreTrainedModel):
+    """
+    An abstract class to handle weights initialization and a simple interface for downloading and loading pretrained
+    models.
+    """
+
+    config_class = BlipConfig
+    base_model_prefix = "blip"
+    supports_gradient_checkpointing = True
+
+    def _init_weights(self, module):
+        """Initialize the weights"""
+        factor = self.config.initializer_range
+        if isinstance(module, nn.Conv2d) or isinstance(module, nn.Embedding) or isinstance(module, nn.Linear):
+            module.weight.data.normal_(mean=0.0, std=factor)
+            if hasattr(module, "bias") and module.bias is not None:
+                module.bias.data.zero_()
+
+        if isinstance(module, BlipVisionEmbeddings):
+            if hasattr(self.config, "vision_config"):
+                factor = self.config.vision_config.initializer_range
+            nn.init.trunc_normal_(
+                module.position_embedding,
+                mean=0.0,
+                std=factor,
+            )
+
+            nn.init.trunc_normal_(
+                module.class_embedding,
+                mean=0.0,
+                std=factor,
+            )
+
+        elif isinstance(module, nn.LayerNorm):
+            module.bias.data.zero_()
+            module.weight.data.fill_(1.0)
+        elif isinstance(module, nn.Linear) and module.bias is not None:
+            module.bias.data.zero_()
+
+
+BLIP_START_DOCSTRING = r"""
+    This model inherits from [`PreTrainedModel`]. Check the superclass documentation for the generic methods the
+    library implements for all its model (such as downloading or saving, resizing the input embeddings, pruning heads
+    etc.)
+
+    This model is also a PyTorch [torch.nn.Module](https://pytorch.org/docs/stable/nn.html#torch.nn.Module) subclass.
+    Use it as a regular PyTorch Module and refer to the PyTorch documentation for all matter related to general usage
+    and behavior.
+
+    Parameters:
+        config ([`BlipConfig`]): Model configuration class with all the parameters of the model.
+            Initializing with a config file does not load the weights associated with the model, only the
+            configuration. Check out the [`~PreTrainedModel.from_pretrained`] method to load the model weights.
+"""
+
+BLIP_TEXT_INPUTS_DOCSTRING = r"""
+    Args:
+        input_ids (`torch.LongTensor` of shape `(batch_size, sequence_length)`):
+            Indices of input sequence tokens in the vocabulary. Padding will be ignored by default should you provide
+            it.
+
+            Indices can be obtained using [`AutoProcessor`]. See [`BlipProcessor.__call__`] for details.
+
+            [What are input IDs?](../glossary#input-ids)
+        attention_mask (`torch.Tensor` of shape `(batch_size, sequence_length)`, *optional*):
+            Mask to avoid performing attention on padding token indices. Mask values selected in `[0, 1]`:
+
+            - 1 for tokens that are **not masked**,
+            - 0 for tokens that are **masked**.
+
+            [What are attention masks?](../glossary#attention-mask)
+        position_ids (`torch.LongTensor` of shape `(batch_size, sequence_length)`, *optional*):
+            Indices of positions of each input sequence tokens in the position embeddings. Selected in the range `[0,
+            config.max_position_embeddings - 1]`.
+
+            [What are position IDs?](../glossary#position-ids)
+        output_attentions (`bool`, *optional*):
+            Whether or not to return the attentions tensors of all attention layers. See `attentions` under returned
+            tensors for more detail.
+        output_hidden_states (`bool`, *optional*):
+            Whether or not to return the hidden states of all layers. See `hidden_states` under returned tensors for
+            more detail.
+        return_dict (`bool`, *optional*):
+            Whether or not to return a [`~utils.ModelOutput`] instead of a plain tuple.
+"""
+
+BLIP_VISION_INPUTS_DOCSTRING = r"""
+    Args:
+        pixel_values (`torch.FloatTensor` of shape `(batch_size, num_channels, height, width)`):
+            Pixel values. Padding will be ignored by default should you provide it. Pixel values can be obtained using
+            [`BlipImageProcessor`]. See [`BlipImageProcessor.__call__`] for details.
+        output_attentions (`bool`, *optional*):
+            Whether or not to return the attentions tensors of all attention layers. See `attentions` under returned
+            tensors for more detail.
+        output_hidden_states (`bool`, *optional*):
+            Whether or not to return the hidden states of all layers. See `hidden_states` under returned tensors for
+            more detail.
+        return_dict (`bool`, *optional*):
+            Whether or not to return a [`~utils.ModelOutput`] instead of a plain tuple.
+        interpolate_pos_encoding (`bool`, *optional*, defaults to `False`):
+            Whether to interpolate the pre-trained position encodings.
+"""
+
+BLIP_INPUTS_DOCSTRING = r"""
+    Args:
+        input_ids (`torch.LongTensor` of shape `(batch_size, sequence_length)`):
+            Indices of input sequence tokens in the vocabulary. Padding will be ignored by default should you provide
+            it.
+
+            Indices can be obtained using [`AutoProcessor`]. See [`BlipProcessor.__call__`] for details.
+
+            [What are input IDs?](../glossary#input-ids)
+        attention_mask (`torch.Tensor` of shape `(batch_size, sequence_length)`, *optional*):
+            Mask to avoid performing attention on padding token indices. Mask values selected in `[0, 1]`:
+
+            - 1 for tokens that are **not masked**,
+            - 0 for tokens that are **masked**.
+
+            [What are attention masks?](../glossary#attention-mask)
+        position_ids (`torch.LongTensor` of shape `(batch_size, sequence_length)`, *optional*):
+            Indices of positions of each input sequence tokens in the position embeddings. Selected in the range `[0,
+            config.max_position_embeddings - 1]`.
+
+            [What are position IDs?](../glossary#position-ids)
+        pixel_values (`torch.FloatTensor` of shape `(batch_size, num_channels, height, width)`):
+            Pixel values. Padding will be ignored by default should you provide it. Pixel values can be obtained using
+            [`BlipImageProcessor`]. See [`BlipImageProcessor.__call__`] for details.
+        return_loss (`bool`, *optional*):
+            Whether or not to return the contrastive loss.
+        output_attentions (`bool`, *optional*):
+            Whether or not to return the attentions tensors of all attention layers. See `attentions` under returned
+            tensors for more detail.
+        output_hidden_states (`bool`, *optional*):
+            Whether or not to return the hidden states of all layers. See `hidden_states` under returned tensors for
+            more detail.
+        return_dict (`bool`, *optional*):
+            Whether or not to return a [`~utils.ModelOutput`] instead of a plain tuple.
+        interpolate_pos_encoding (`bool`, *optional*, defaults to `False`):
+            Whether to interpolate the pre-trained position encodings.
+"""
 
 class BlipEncoder(nn.Module):
     """
@@ -415,6 +553,8 @@ class BlipForSummarization(BlipPreTrainedModel):
 
         self.decoder_pad_token_id = config.text_config.pad_token_id
         self.decoder_start_token_id = config.text_config.bos_token_id
+
+        self.post_init()
 
     def get_input_embeddings(self) -> nn.Module:
         return self.vision_model.embeddings.patch_embedding

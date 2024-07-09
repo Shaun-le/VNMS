@@ -695,6 +695,8 @@ class BlipTextModel(BlipTextPreTrainedModel):
         self.encoder = BlipTextEncoder(config)
         self.pooler = BlipTextPooler(config) if add_pooling_layer else None
 
+        self.post_init()
+
     def get_input_embeddings(self):
         return self.embeddings.word_embeddings
 
