@@ -230,10 +230,10 @@ def train(
     metrics = load_metric('rouge')
     rouge_results = [{k: (v.mid.fmeasure) * 100} for k, v in metrics.compute(predictions=pred, references=ref).items()]
 
-    meteor_metrics = evaluate.load('meteor')
+    meteor_metrics = evaluate.load('meteor', trust_remote_code=True)
     meteor_results = meteor_metrics.compute(predictions=pred, references=ref)
 
-    bert_score = evaluate.load('bertscore')
+    bert_score = evaluate.load('bertscore', trust_remote_code=True)
     bert_results = bert_score.compute(predictions=pred, references=ref, lang='vi')
     bert_mean_f1 = np.array(bert_results['f1']).mean()
 
