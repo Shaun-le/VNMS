@@ -53,13 +53,14 @@ def train(
         model
     ), "Please specify a --base_model, e.g. --base_model='VietAI/vit5-base'"
 
-    def formatting_func(example, stype):
-        if stype == 'abstract':
-            input_seq = example['content']
-            output_seq = f"{example['abstract']}"
-        else:
-            input_seq = example['content']
-            output_seq = f"{example['title']}"
+    def formatting_func(example):
+        input_seq = example['content']
+        output_seq = f"{example['abstract']}"
+        return {"input_seq" : input_seq, 'output_seq': output_seq}
+
+    def formatting_func_title(example):
+        input_seq = example['content']
+        output_seq = f"{example['title']}"
         return {"input_seq" : input_seq, 'output_seq': output_seq}
 
     def bleu(predict, goal):
@@ -86,13 +87,20 @@ def train(
         dev_dataset = load_dataset("json", data_files=f"{data_path}/dev.jsonl", split="train")
         test_dataset = load_dataset("json", data_files=f"{data_path}/test.jsonl", split="train")
 
-        train_dataset = train_dataset.map(formatting_func, num_proc=num_proc).remove_columns(
+        if stype == 'abstract':
+            train_dataset = train_dataset.map(formatting_func, num_proc=num_proc).remove_columns(
+                    ['id', 'abstract', 'content', 'pid', 'title'])
+            dev_dataset = dev_dataset.map(formatting_func, num_proc=num_proc).remove_columns(
+                    ['id', 'abstract', 'content', 'pid', 'title'])
+            test_dataset = test_dataset.map(formatting_func, num_proc=num_proc).remove_columns(
+                    ['id', 'abstract', 'content', 'pid', 'title'])
+        else:
+            train_dataset = train_dataset.map(formatting_func_title, num_proc=num_proc).remove_columns(
                 ['id', 'abstract', 'content', 'pid', 'title'])
-        dev_dataset = dev_dataset.map(formatting_func, num_proc=num_proc).remove_columns(
+            dev_dataset = dev_dataset.map(formatting_func_title, num_proc=num_proc).remove_columns(
                 ['id', 'abstract', 'content', 'pid', 'title'])
-        test_dataset = test_dataset.map(formatting_func, num_proc=num_proc).remove_columns(
+            test_dataset = test_dataset.map(formatting_func_title, num_proc=num_proc).remove_columns(
                 ['id', 'abstract', 'content', 'pid', 'title'])
-
         return train_dataset, dev_dataset, test_dataset
 
     def compute_metric(
