@@ -227,7 +227,7 @@ def train(
 
     bleu_score = bleu(pred, ref)
 
-    metrics = load_metric('rouge')
+    metrics = load_metric('rouge', trust_remote_code=True)
     rouge_results = [{k: (v.mid.fmeasure) * 100} for k, v in metrics.compute(predictions=pred, references=ref).items()]
 
     meteor_metrics = evaluate.load('meteor', trust_remote_code=True)
