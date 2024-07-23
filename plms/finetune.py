@@ -85,9 +85,13 @@ def train(
 
     def prepare_data():
         logger.info('-----:----- Preparing dataset -----:-----')
-        train_dataset = load_dataset("json", data_files=f"{data_path}/train.jsonl", split="train")
-        dev_dataset = load_dataset("json", data_files=f"{data_path}/dev.jsonl", split="train")
-        test_dataset = load_dataset("json", data_files=f"{data_path}/test.jsonl", split="train")
+        # train_dataset = load_dataset("json", data_files=f"{data_path}/train.jsonl", split="train")
+        # dev_dataset = load_dataset("json", data_files=f"{data_path}/dev.jsonl", split="train")
+        # test_dataset = load_dataset("json", data_files=f"{data_path}/test.jsonl", split="train")
+        data = load_dataset(f'{data_path}', use_auth_token=True)
+        train_dataset = data['train']
+        dev_dataset = data['validation']
+        test_dataset = data['test']
 
         if stype == 'abstract':
             train_dataset = train_dataset.map(formatting_func, num_proc=num_proc).remove_columns(
