@@ -31,6 +31,7 @@ def train(
         num_epochs: int = 10,
         num_proc: int = 8,
         checkpoint_path: str = './checkpoints/',
+        resume_from_checkpoint: str = '',
 ):
     if int(os.environ.get("LOCAL_RANK", 0)) == 0:
         print(
@@ -48,6 +49,7 @@ def train(
             f"num_epochs: {num_epochs}\n"
             f"num_proc: {num_proc}\n"
             f"checkpoint_path: {checkpoint_path}\n"
+            f"resume_from_checkpoint: {resume_from_checkpoint}\n"
         )
     assert (
         model
@@ -199,9 +201,9 @@ def train(
         )
         logger.info('Training')
         trainer.train()
-
+        if resume_from_checkpoint != '':
+            trainer.train(resume_from_checkpoint)
         outputs = compute_metric(model=model, tokenizer=tokenizer, tokenized_test=tokenized_test)
-
         return outputs
 
     os.makedirs(f'{checkpoint_path}', mode=0o777, exist_ok=True)
