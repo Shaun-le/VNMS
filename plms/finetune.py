@@ -246,8 +246,8 @@ def train(
     results = {
         "bleu_score": bleu_score,
         "rouge_results": rouge_results,
-        "meteor_results": meteor_results,
-        "bert_score_mean_f1": bert_mean_f1
+        "meteor_results": meteor_results * 100,
+        "bert_score_mean_f1": bert_mean_f1 * 100
     }
 
     print(results)
