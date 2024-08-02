@@ -32,6 +32,7 @@ def train(
         num_proc: int = 8,
         checkpoint_path: str = './checkpoints/',
         resume_from_checkpoint: str = '',
+        gradient_accumulation_steps: int = 8
 ):
     if int(os.environ.get("LOCAL_RANK", 0)) == 0:
         print(
@@ -50,6 +51,7 @@ def train(
             f"num_proc: {num_proc}\n"
             f"checkpoint_path: {checkpoint_path}\n"
             f"resume_from_checkpoint: {resume_from_checkpoint}\n"
+            f"gradient_accumulation_steps: {gradient_accumulation_steps}"
         )
     assert (
         model
@@ -189,9 +191,9 @@ def train(
             eval_steps=500,
             evaluation_strategy='steps',
             save_strategy="steps",
-            save_steps=50,
+            save_steps=500,
             save_total_limit=1,
-            gradient_accumulation_steps=8,
+            gradient_accumulation_steps=gradient_accumulation_steps,
             report_to='none',
             label_names=['labels']
         )
@@ -204,8 +206,9 @@ def train(
             eval_dataset=tokenized_val
         )
         logger.info('Training')
-        trainer.train()
-        if resume_from_checkpoint != '':
+        if resume_from_checkpoint == '':
+            trainer.train()
+        elif resume_from_checkpoint != '':
             trainer.train(resume_from_checkpoint)
         outputs = compute_metric(model=model, tokenizer=tokenizer, tokenized_test=tokenized_test)
         return outputs
